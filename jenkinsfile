@@ -3,28 +3,61 @@
 // - Maven build/test
 // - Multi-stage Docker build (openjdk:17-jre-slim base)
 // - Run container locally on port 8081
-// Use Docker Pipeline plugin
+// Use Docker Pipeline plugin with proper Docker socket mounting
 
 
 pipeline {
     agent any
+    
+    environment {
+        DOCKER_IMAGE_NAME = 'my-calc-app-prod'
+    }
+    
     stages {
         stage('Build') {
-            steps {
-                script {
-                    docker.image('maven:3.9.4-openjdk-17').inside {
-                        sh 'mvn -B clean package'
-                    }
+            agent {
+                docker {
+                    image 'maven:3.9.5-eclipse-temurin-17'
+                    args '-v $HOME/.m2:/root/.m2'
                 }
             }
+            steps {
+                sh 'mvn -B clean package'
+            }
         }
+        
         stage('Docker Build') {
             steps {
                 script {
-                    docker.build("my-calc-app-prod:${env.BUILD_ID}")
-                    sh "docker run -d -p 8082:8080 my-calc-app-prod:${env.BUILD_ID}"
+                    def app = docker.build("${DOCKER_IMAGE_NAME}:${env.BUILD_ID}")
                 }
             }
+        }
+        
+        stage('Deploy') {
+            steps {
+                script {
+                    // Stop any existing container
+                    sh """
+                        docker ps -q --filter ancestor=${DOCKER_IMAGE_NAME} | xargs -r docker stop || true
+                        docker ps -aq --filter ancestor=${DOCKER_IMAGE_NAME} | xargs -r docker rm || true
+                    """
+                    // Run new container
+                    sh "docker run -d -p 8082:8080 --name calc-app-${env.BUILD_ID} ${DOCKER_IMAGE_NAME}:${env.BUILD_ID}"
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo "Build successful! Application running on port 8082"
+        }
+        failure {
+            echo "Build failed!"
         }
     }
 }
