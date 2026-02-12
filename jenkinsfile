@@ -5,6 +5,7 @@
 // - Run container locally on port 8081
 // Use Docker Pipeline plugin
 
+
 pipeline {
     agent any
     stages {
