@@ -37,13 +37,13 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Stop any existing container
-                    sh """
-                        docker ps -q --filter ancestor=${DOCKER_IMAGE_NAME} | xargs -r docker stop || true
-                        docker ps -aq --filter ancestor=${DOCKER_IMAGE_NAME} | xargs -r docker rm || true
-                    """
+                    def containerName = "calc-app-running"
+                    // Stop and remove existing container to free up port and name
+                    sh "docker stop ${containerName} || true"
+                    sh "docker rm ${containerName} || true"
+                    
                     // Run new container
-                    sh "docker run -d -p 8082:8080 --name calc-app-${env.BUILD_ID} ${DOCKER_IMAGE_NAME}:${env.BUILD_ID}"
+                    sh "docker run -d -p 8082:8080 --name ${containerName} ${DOCKER_IMAGE_NAME}:${env.BUILD_ID}"
                 }
             }
         }
@@ -51,7 +51,7 @@ pipeline {
     
     post {
         always {
-            cleanWs()
+            deleteDir() // Use deleteDir() as a built-in alternative to cleanWs()
         }
         success {
             echo "Build successful! Application running on port 8082"

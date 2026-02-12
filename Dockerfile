@@ -38,12 +38,12 @@ RUN apt-get update \
 RUN addgroup --system appgroup && adduser --system --group appuser
 USER appuser
 
-# Expose the application port (user confirmed 8081)
-EXPOSE 8081
+# Expose the application port (matches application.yml)
+EXPOSE 8080
 
-# Healthcheck using the user-confirmed endpoint
+# Healthcheck using the application port
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:8081/actuator/health || exit 1
+  CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 # Use shell form entrypoint so JAVA_OPTS are expanded at runtime
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/calculator-api-${APP_VERSION}.jar"]
