@@ -9,7 +9,15 @@
 pipeline {
     agent any
     stages {
-        stage('Build') { steps { sh 'mvn clean package' } }
+        stage('Build') {
+            steps {
+                script {
+                    docker.image('maven:3.9.4-openjdk-17').inside {
+                        sh 'mvn -B clean package'
+                    }
+                }
+            }
+        }
         stage('Docker Build') {
             steps {
                 script {
