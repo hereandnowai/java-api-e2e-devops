@@ -1,0 +1,25 @@
+# Ignore build output
+target/
+build/
+
+# VCS and editor metadata
+.git/
+.gitignore
+.idea/
+.vscode/
+
+# Docs and local files
+*.md
+README.md
+
+# OS and node artifacts
+.DS_Store
+node_modules/
+
+# Logs and env
+*.log
+.env
+
+# Maven wrappers & local m2
+.mvn/
+.settings/
